@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nurthure Monitor</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- ========== DISCONNECTED OVERLAY ========== -->
+        <div id="disconnected-overlay" class="disconnected-overlay">
+            <div class="disconnected-content">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ff1744" stroke-width="2">
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                    <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                    <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                    <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+                    <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                    <line x1="12" y1="20" x2="12.01" y2="20"></line>
+                </svg>
+                <h3>Device Not Connected</h3>
+                <p>Waiting for Raspberry Pi...</p>
+                <button class="retry-btn" onclick="window.connectionManager.start()">Retry Connection</button>
+            </div>
+        </div>
+
+        <!-- ========== WIFI CONFIG MODAL ========== -->
+        <div id="wifi-modal" class="modal hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content">
+                <h3>WiFi Configuration</h3>
+                <div class="form-group">
+                    <label for="wifi-address">Raspberry Pi IP Address</label>
+                    <input type="text" id="wifi-address" placeholder="192.168.4.1" value="192.168.4.1">
+                </div>
+                <div class="form-group">
+                    <label for="wifi-port">Port</label>
+                    <input type="text" id="wifi-port" placeholder="80" value="80">
+                </div>
+                <div class="modal-actions">
+                    <button id="wifi-cancel-btn" class="btn btn-secondary">Cancel</button>
+                    <button id="wifi-save-btn" class="btn btn-primary">Save & Connect</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== LIVE MONITOR SCREEN ========== -->
+        <section id="screen-monitor" class="screen active">
+            <header class="screen-header">
+                <div>
+                    <h1 class="screen-title">Live Monitor</h1>
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Device Not Connected</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" aria-label="Camera">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M23 7l-7 5 7 5V7z"></path>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                        </svg>
+                    </button>
+                    <div class="avatar">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content">
+                <!-- Main Sensor Cards Row -->
+                <div class="cards-row">
+                    <!-- Respiration Card -->
+                    <div class="card card-respiration">
+                        <div class="card-header-inline">
+                            <span class="sensor-label">Respiration</span>
+                            <span class="sensor-badge">
+                                <svg class="wave-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="#00b8d4" stroke-width="2">
+                                    <path d="M2 12h2l3-9 4 18 4-9 3 0h4"></path>
+                                </svg>
+                                <span class="badge-text">_WAVE</span>
+                            </span>
+                        </div>
+                        <div class="respiration-value">
+                            <span class="big-value" id="resp-value">--</span>
+                            <span class="unit">rpm</span>
+                        </div>
+                        <canvas id="respiration-wave" class="waveform-canvas"></canvas>
+                        <div class="card-dots">
+                            <span class="dot active"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                    </div>
+
+                    <!-- Audio Card -->
+                    <div class="card card-audio">
+                        <div class="card-header-inline">
+                            <span class="sensor-label">Audio (MEMS)</span>
+                            <svg class="mic-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                stroke="#4caf50" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                            </svg>
+                        </div>
+                        <div class="audio-status" id="audio-status">--</div>
+                        <div class="card-dots">
+                            <span class="dot active"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secondary Sensors Row -->
+                <div class="cards-row three-col">
+                    <div class="card card-small">
+                        <span class="sensor-label-small">BODY TEMP</span>
+                        <div class="value-display">
+                            <span class="medium-value" id="body-temp">--</span>
+                            <span class="degree">°</span>
+                        </div>
+                        <span class="sensor-model">MLX90614</span>
+                    </div>
+
+                    <div class="card card-small">
+                        <span class="sensor-label-small">POSTURE</span>
+                        <div class="posture-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="#9ca3af">
+                                <path
+                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                            </svg>
+                        </div>
+                        <span class="posture-text" id="posture-value">--</span>
+                    </div>
+
+                    <div class="card card-small">
+                        <span class="sensor-label-small">RADAR</span>
+                        <div class="radar-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af"
+                                stroke-width="2">
+                                <path d="M2 12h2m4 0h2m4 0h2m4 0h2"></path>
+                                <path d="M6 8v8"></path>
+                                <path d="M10 6v12"></path>
+                                <path d="M14 4v16"></path>
+                                <path d="M18 8v8"></path>
+                            </svg>
+                        </div>
+                        <span class="status-text-small" id="radar-status">--</span>
+                    </div>
+                </div>
+
+                <!-- Nursery Environment Section -->
+                <div class="card card-environment">
+                    <h3 class="section-title">NURSERY ENVIRONMENT</h3>
+                    <div class="env-grid">
+                        <div class="env-item">
+                            <span class="env-label">Temp</span>
+                            <div class="env-value">
+                                <span id="env-temp">--</span>
+                                <span class="degree-small">°</span>
+                            </div>
+                        </div>
+                        <div class="env-item">
+                            <span class="env-label">CO<sub>2</sub></span>
+                            <div class="env-value" id="env-co2">--</div>
+                            <span class="env-unit">ppm</span>
+                        </div>
+                        <div class="env-item">
+                            <span class="env-label">VOC</span>
+                            <div class="env-value" id="env-voc">--</div>
+                        </div>
+                        <div class="env-item">
+                            <span class="env-label">Gas</span>
+                            <div class="env-status-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#9ca3af">
+                                    <path
+                                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Smart Analysis Card -->
+                <div class="card card-smart-analysis">
+                    <div class="smart-header">
+                        <div class="smart-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                <circle cx="12" cy="8" r="5" />
+                                <path d="M12 13c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z" />
+                                <circle cx="8" cy="6" r="1" fill="#9333ea" />
+                                <circle cx="16" cy="6" r="1" fill="#9333ea" />
+                            </svg>
+                        </div>
+                        <h3 class="smart-title">Smart Analysis</h3>
+                        <button id="refresh-analysis-btn" class="refresh-btn">Refresh Analysis</button>
+                    </div>
+                    <p class="smart-content" id="smart-analysis-content">
+                        Waiting for sensor data to generate analysis. Connect to Raspberry Pi to begin monitoring.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Logo -->
+            <div class="logo-container">
+                <span class="logo-text">R<span class="logo-k">K</span><span class="logo-l">L</span></span>
+            </div>
+        </section>
+
+        <!-- ========== TRENDS/HISTORY SCREEN ========== -->
+        <section id="screen-history" class="screen">
+            <header class="screen-header simple">
+                <h1 class="screen-title">Trends</h1>
+            </header>
+
+            <div class="content">
+                <!-- Time Filter Tabs -->
+                <div class="time-tabs">
+                    <button class="time-tab active" data-range="1h">1H</button>
+                    <button class="time-tab" data-range="24h">24H</button>
+                    <button class="time-tab" data-range="7d">7D</button>
+                    <button class="time-tab" data-range="1m">1M</button>
+                </div>
+
+                <!-- Respiration Chart -->
+                <div class="card card-chart">
+                    <div class="chart-header">
+                        <div class="chart-title-group">
+                            <span class="sensor-badge small">
+                                <svg class="wave-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                    stroke="#00b8d4" stroke-width="2">
+                                    <path d="M2 12h2l3-9 4 18 4-9 3 0h4"></path>
+                                </svg>
+                                <span class="badge-text">_WAVE</span>
+                            </span>
+                            <span class="chart-label">Respiration (mmWave)</span>
+                        </div>
+                        <span class="chart-avg">Avg: <span id="resp-avg">--</span> rpm</span>
+                    </div>
+                    <canvas id="chart-respiration" class="chart-canvas"></canvas>
+                </div>
+
+                <!-- CO2 Chart -->
+                <div class="card card-chart">
+                    <div class="chart-header">
+                        <div class="chart-title-group">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="#78909c">
+                                <path
+                                    d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" />
+                            </svg>
+                            <span class="chart-label">CO<sub>2</sub> Levels (MH-Z19C)</span>
+                        </div>
+                        <span class="chart-avg">Avg: <span id="co2-avg">--</span> ppm</span>
+                    </div>
+                    <canvas id="chart-co2" class="chart-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Logo -->
+            <div class="logo-container">
+                <span class="logo-text">R<span class="logo-k">K</span><span class="logo-l">L</span></span>
+            </div>
+        </section>
+
+        <!-- ========== ALERTS SCREEN ========== -->
+        <section id="screen-alerts" class="screen">
+            <header class="screen-header">
+                <h1 class="screen-title">Alerts</h1>
+                <button class="clear-all-btn" id="clear-alerts">CLEAR ALL</button>
+            </header>
+
+            <div class="content">
+                <div class="alerts-list" id="alerts-list">
+                    <!-- Alerts will be populated dynamically -->
+                    <div class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <p>No alerts</p>
+                        <p class="empty-subtitle">All clear! No issues detected.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logo -->
+            <div class="logo-container">
+                <span class="logo-text">R<span class="logo-k">K</span><span class="logo-l">L</span></span>
+            </div>
+        </section>
+
+        <!-- ========== SETTINGS SCREEN ========== -->
+        <section id="screen-settings" class="screen">
+            <header class="screen-header simple">
+                <h1 class="screen-title">Settings</h1>
+            </header>
+
+            <div class="content">
+                <!-- Connection Settings -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">CONNECTION</h3>
+                    <div class="card card-settings">
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <span class="setting-label">Raspberry Pi WiFi</span>
+                                <span class="setting-value" id="pi-address-display">192.168.4.1:80</span>
+                            </div>
+                            <button id="wifi-config-btn" class="btn btn-small">Configure</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sensor Thresholds Section -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">SENSOR THRESHOLDS</h3>
+
+                    <div class="card card-settings">
+                        <!-- Respiration Threshold -->
+                        <div class="threshold-item">
+                            <div class="threshold-header">
+                                <span class="threshold-label">Respiration Warning (mmWave)</span>
+                                <span class="threshold-value">&lt; 20 or &gt; 60 rpm</span>
+                            </div>
+                            <div class="threshold-slider">
+                                <input type="range" min="10" max="30" value="20" class="slider" id="resp-min">
+                                <div class="slider-track"></div>
+                            </div>
+                        </div>
+
+                        <!-- CO2 Threshold -->
+                        <div class="threshold-item">
+                            <div class="threshold-header">
+                                <span class="threshold-label">Max CO<sub>2</sub> (MH-Z19C)</span>
+                                <span class="threshold-value" id="co2-threshold-val">1000 ppm</span>
+                            </div>
+                            <div class="threshold-slider">
+                                <input type="range" min="400" max="2000" value="1000" class="slider" id="co2-max">
+                                <div class="slider-track"></div>
+                            </div>
+                        </div>
+
+                        <!-- Body Temp Threshold -->
+                        <div class="threshold-item">
+                            <div class="threshold-header">
+                                <span class="threshold-label">Body Temp (MLX90614)</span>
+                                <span class="threshold-value">36°C - 38°C</span>
+                            </div>
+                            <div class="threshold-slider">
+                                <input type="range" min="35" max="40" value="37" class="slider" id="temp-range">
+                                <div class="slider-track"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hardware Modules Section -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">HARDWARE MODULES</h3>
+
+                    <div class="card card-settings">
+                        <div class="hardware-item">
+                            <span class="hardware-name">mmWave Radar</span>
+                            <span class="hardware-status offline" data-status="Active">Offline</span>
+                        </div>
+                        <div class="hardware-item">
+                            <span class="hardware-name">BME688 + MH-Z19C</span>
+                            <span class="hardware-status offline" data-status="Active">Offline</span>
+                        </div>
+                        <div class="hardware-item">
+                            <span class="hardware-name">MQ-135 Gas Sensor</span>
+                            <span class="hardware-status offline" data-status="Calibrated">Offline</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gemini API Section -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">SMART ANALYSIS (GEMINI)</h3>
+                    <div class="card card-settings">
+                        <div class="setting-item column">
+                            <label for="gemini-api-key" class="setting-label">Gemini API Key</label>
+                            <div class="input-row">
+                                <input type="password" id="gemini-api-key" placeholder="Enter your API key">
+                                <button id="gemini-save-btn" class="btn btn-small">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Export Section -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title">DATA EXPORT</h3>
+                    <div class="card card-settings">
+                        <div class="export-buttons">
+                            <button id="export-csv-btn" class="btn btn-export">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Export CSV
+                            </button>
+                            <button id="export-json-btn" class="btn btn-export">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Export JSON
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Safety Notice -->
+                <div class="safety-notice">
+                    <svg class="info-icon" width="20" height="20" viewBox="0 0 24 24" fill="#5c6bc0">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                    </svg>
+                    <p class="safety-text">
+                        <strong>Safety Notice:</strong> This device uses non-contact sensors (Radar, IR, Gas). Always
+                        ensure clear line-of-sight for the camera and radar. Not a medical device.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Logo -->
+            <div class="logo-container">
+                <span class="logo-text">R<span class="logo-k">K</span><span class="logo-l">L</span></span>
+            </div>
+        </section>
+
+        <!-- ========== BOTTOM NAVIGATION ========== -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-screen="monitor">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                <span>Monitor</span>
+            </button>
+            <button class="nav-item" data-screen="history">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>History</span>
+            </button>
+            <button class="nav-item" data-screen="alerts">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span class="badge-dot hidden"></span>
+                <span>Alerts</span>
+            </button>
+            <button class="nav-item" data-screen="settings">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+                <span>Settings</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Load all JS modules -->
+    <script src="js/connection.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/alerts.js"></script>
+    <script src="js/trends.js"></script>
+    <script src="js/gemini.js"></script>
+    <script src="js/export.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
